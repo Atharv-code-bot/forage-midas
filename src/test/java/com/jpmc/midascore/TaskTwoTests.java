@@ -1,18 +1,38 @@
 package com.jpmc.midascore;
 
+import com.jpmc.midascore.foundation.Transaction;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.stereotype.Component;
 import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest
 @DirtiesContext
+@ComponentScan("com.jpmc.midascore") // adjust to match listener package
 @EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
 class TaskTwoTests {
     static final Logger logger = LoggerFactory.getLogger(TaskTwoTests.class);
+
+
+
+    @Component
+    public class TransactionListener {
+        @KafkaListener(
+                topics = "${general.kafka-topic}",
+                groupId = "midas-core",
+                containerFactory = "kafkaListenerContainerFactory"
+        )
+        public void listen(Transaction transaction) {
+            System.out.println("🔥 Listener received: " + transaction);
+        }
+    }
+
 
     @Autowired
     private KafkaProducer kafkaProducer;
